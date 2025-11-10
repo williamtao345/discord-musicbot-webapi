@@ -1,0 +1,29 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/williamtao345_gmail_com/projects/discord-music-bot/discord-musicbot-webapi
+          git fetch origin
+          git reset --hard origin/master
+
+      - name: Install dependencies
+        run: |
+          cd /home/williamtao345_gmail_com/projects/discord-music-bot/discord-musicbot-webapi
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Restart musicbot service
+        run: sudo systemctl restart musicbot.service
+
+      - name: Check service status
+        run: sudo systemctl status musicbot.service --no-pager
