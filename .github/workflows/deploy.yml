@@ -8,18 +8,32 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+
     steps:
+      - name: Get deployment path from service
+        id: get_path
+        run: |
+          DEPLOY_PATH=$(systemctl show musicbot.service -p WorkingDirectory --value)
+          echo "deploy_path=$DEPLOY_PATH" >> $GITHUB_OUTPUT
+          echo "Deployment path: $DEPLOY_PATH"
+
       - name: Pull latest code
         run: |
-          cd /home/williamtao345_gmail_com/projects/discord-music-bot/discord-musicbot-webapi
+          cd ${{ steps.get_path.outputs.deploy_path }}
           git fetch origin
           git reset --hard origin/master
 
       - name: Install dependencies
         run: |
-          cd /home/williamtao345_gmail_com/projects/discord-music-bot/discord-musicbot-webapi
+          cd ${{ steps.get_path.outputs.deploy_path }}
           if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+            VENV_ACTIVATE="$(dirname ${{ steps.get_path.outputs.deploy_path }})/bin/activate"
+            if [ -f "$VENV_ACTIVATE" ]; then
+              source "$VENV_ACTIVATE"
+              pip install -r requirements.txt
+            else
+              echo "Warning: Virtual environment not found at $VENV_ACTIVATE"
+            fi
           fi
 
       - name: Restart musicbot service
