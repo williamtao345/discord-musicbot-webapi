@@ -80,7 +80,7 @@
             margin-bottom: 15px;
         }
 
-        .queue-item {
+        .queue-item, .cache-item {
             padding: 10px;
             background: #f8f9fa;
             margin-bottom: 8px;
@@ -88,6 +88,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .cache-item small {
+            color: #666;
+        }
+
+        .cache-stats {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
 
         .message {
@@ -171,6 +183,17 @@
             <button onclick="refresh()">Refresh</button>
             <div id="queueMessage" class="message hidden"></div>
         </div>
+
+        <!-- Cache Management -->
+        <div class="section">
+            <h2>Cached Songs (<span id="cacheCount">0</span>)</h2>
+            <div class="cache-stats" id="cacheStats">
+                Total Size: 0 MB
+            </div>
+            <div id="cacheList"></div>
+            <button onclick="refreshCache()">Refresh Cache</button>
+            <div id="cacheMessage" class="message hidden"></div>
+        </div>
     </div>
 
     <script>
@@ -181,6 +204,7 @@
         if (API_KEY) {
             document.getElementById('apiKey').value = API_KEY;
             refresh();
+            refreshCache();
         }
 
         function headers() {
@@ -407,6 +431,130 @@
                 refresh();
             } catch (err) {
                 showMessage('queueMessage', err.message, true);
+            }
+        }
+
+        function parseVideoTitle(filename) {
+            // Parse title from filename format: Platform-VideoID-Title-Hash.ext
+            // Remove extension
+            const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.')) || filename;
+
+            // Split by dash
+            const parts = nameWithoutExt.split('-');
+
+            // Need at least 4 parts: Platform, VideoID, Title, Hash
+            if (parts.length < 4) {
+                return filename; // Fallback to full filename
+            }
+
+            // Extract title: everything between VideoID (index 1) and Hash (last part)
+            // For YouTube: youtube-{videoID}-{title}-{hash}
+            // For Bilibili: BiliBili-{videoID}-{title}-{hash}
+            const titleParts = parts.slice(2, -1);
+            let title = titleParts.join('-');
+
+            // Replace underscores with spaces and decode URL encoding
+            title = title.replace(/_/g, ' ');
+            try {
+                title = decodeURIComponent(title);
+            } catch (e) {
+                // If decoding fails, use the title as-is
+            }
+
+            return title || filename;
+        }
+
+        async function refreshCache() {
+            if (!API_KEY) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/cache/`, { headers: headers() });
+                const data = await res.json();
+
+                // Update cache stats
+                document.getElementById('cacheCount').textContent = data.total_count;
+                document.getElementById('cacheStats').textContent =
+                    `Total Size: ${data.total_size_mb} MB (${data.total_count} files)`;
+
+                // Update cache list
+                const list = document.getElementById('cacheList');
+                if (data.cached_songs.length === 0) {
+                    list.innerHTML = '<div style="color: #999;">No cached songs</div>';
+                    return;
+                }
+
+                list.innerHTML = data.cached_songs.map(song => {
+                    const source = song.source ? song.source.toUpperCase() : 'Unknown';
+                    const sourceIcon = song.source === 'youtube' ? '📺' : song.source === 'bilibili' ? '🎬' : '🎵';
+
+                    // Use metadata if available, otherwise parse filename
+                    const title = song.title || parseVideoTitle(song.filename);
+                    const author = song.author || 'Unknown';
+                    const duration = song.duration ? formatTime(song.duration) : 'Unknown';
+
+                    // Show "Add to Queue" button only if metadata with URL exists
+                    const addButton = (song.has_metadata && song.url)
+                        ? `<button onclick="addCachedToQueue('${song.url.replace(/'/g, "\\'")}', '${title.replace(/'/g, "\\'")}')">Add to Queue</button>`
+                        : `<button disabled title="Metadata not available for old cached files">Add to Queue</button>`;
+
+                    return `
+                        <div class="cache-item">
+                            <div>
+                                <strong>${sourceIcon} ${title}</strong><br>
+                                <small>${author} • ${duration}</small><br>
+                                <small style="color: #999;">${song.filename}</small>
+                            </div>
+                            <div>
+                                ${addButton}
+                                <button onclick="deleteCachedSong('${encodeURIComponent(song.filename)}')" class="danger">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to refresh cache:', err);
+                showMessage('cacheMessage', 'Failed to load cached songs', true);
+            }
+        }
+
+        async function deleteCachedSong(filename) {
+            const decodedFilename = decodeURIComponent(filename);
+            if (!confirm(`Delete "${decodedFilename}"?`)) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/cache/${filename}`, {
+                    method: 'DELETE',
+                    headers: headers()
+                });
+                const data = await res.json();
+                showMessage('cacheMessage', data.message, !data.success);
+                if (data.success) {
+                    refreshCache();
+                }
+            } catch (err) {
+                showMessage('cacheMessage', err.message, true);
+            }
+        }
+
+        async function addCachedToQueue(url, title) {
+            try {
+                // Use the existing /api/queue/add endpoint
+                const res = await fetch(`${API_URL}/api/queue/add`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify({ query: url })
+                });
+                const data = await res.json();
+
+                // Customize message to indicate it's from cache
+                if (data.success) {
+                    showMessage('cacheMessage', `Added '${title}' from cache to queue`, false);
+                    refresh(); // Update queue display
+                } else {
+                    showMessage('cacheMessage', data.message, true);
+                }
+            } catch (err) {
+                showMessage('cacheMessage', err.message, true);
             }
         }
 

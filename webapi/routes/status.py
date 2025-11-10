@@ -13,13 +13,18 @@ router = APIRouter(prefix="/api/status", tags=["status"])
 
 def _entry_to_song_info(entry, position: Optional[int] = None) -> SongInfo:
     """Convert a playlist entry to SongInfo schema"""
+    # Get video uploader/channel from metadata, not Discord user
+    video_author = None
+    if hasattr(entry, 'info'):
+        video_author = entry.info.get("uploader") or entry.info.get("channel")
+
     return SongInfo(
         title=entry.title,
         url=getattr(entry, 'url', None),
         duration=entry.duration,
         thumbnail=getattr(entry, 'thumbnail', None),
-        author=getattr(entry, 'author', None),
-        channel=getattr(entry, 'channel', None),
+        author=video_author,
+        channel=video_author,  # Use same value for both fields
         position=position
     )
 

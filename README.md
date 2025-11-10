@@ -10,19 +10,29 @@ MusicBot is the original Discord music bot written for [Python](https://www.pyth
 
 ![Main](https://i.imgur.com/FWcHtcS.png)
 
-## Web API (New Feature)
+## Web API & Interface (New Feature)
 
-This fork adds a REST API for remote bot control via HTTP. Control playback, manage the queue, and adjust settings from any HTTP client or web dashboard.
+This fork adds a REST API and web interface for remote bot control via HTTP.
 
-**Features:**
-- Playback control (play, pause, skip, stop)
-- Queue management (add, remove, shuffle, clear)
-- Settings control (volume, loop modes)
-- Status endpoints (current track, queue info)
-- API key authentication
-- Interactive docs at `/docs`
+### Web Interface
+Visit `http://localhost:8000/` for an interactive control panel:
+- 🎵 Playback controls (play, pause, skip, stop)
+- 📋 Queue management (add, remove, shuffle, clear)
+- 🔊 Volume control with slider
+- 💾 Cache management (view and delete cached songs)
+- 📊 Real-time status updates (auto-refresh every 5s)
 
-**Configuration:** Add to `config/options.ini`:
+### REST API Endpoints
+
+**Playback:** `/api/playback/{play,pause,skip,stop}`
+**Queue:** `/api/queue/add`, `/api/queue/{index}`, `/api/queue/shuffle`
+**Settings:** `/api/settings/volume`
+**Status:** `/api/status`, `/api/status/queue`
+**Cache:** `/api/cache/` (list), `/api/cache/{filename}` (delete)
+**Docs:** `/docs` (interactive API documentation)
+
+### Configuration
+Add to `config/options.ini`:
 ```ini
 [WebAPI]
 Enabled = yes
@@ -31,10 +41,25 @@ Port = 8000
 APIKey = your-secret-key
 ```
 
-**Example:**
-```bash
-curl -H "X-API-Key: your-secret-key" http://localhost:8000/api/status
-```
+### How It Works: URL → Music Playback
+
+1. **User Input** → Web interface or API receives URL
+2. **Metadata Extraction** → `yt-dlp` fetches info (title, duration) without downloading
+3. **Queue Addition** → Entry added to queue instantly (non-blocking)
+4. **Playback Trigger** → Player gets next entry when ready
+5. **Download** → Audio file downloaded to `audio_cache/` (cached for reuse)
+6. **Streaming** → `FFmpeg` converts to PCM audio → Discord voice channel
+
+**Key Features:**
+- **Two-phase process:** Fast metadata extraction, background audio download
+- **Smart caching:** Downloaded files stored in `audio_cache/` to avoid re-downloads
+- **Event-driven:** Queue management decoupled from playback
+- **Async/non-blocking:** Queue adds instantly, downloads happen in background
+
+### Bug Fixes
+- Fixed `await` on synchronous `player.play()` and `player.skip()` methods
+- Fixed queue API tuple unpacking for `add_entry_from_info()`
+- Removed invalid `player.playlist.loop` parameter from `extract_info()` call
 
 ## Setup
 Setting up the MusicBot is relatively painless - just follow one of the [guides](https://just-some-bots.github.io/MusicBot/). After that, configure the bot to ensure its connection to Discord.

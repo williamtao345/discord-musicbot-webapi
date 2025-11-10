@@ -1,7 +1,9 @@
 import asyncio
 import datetime
+import json
 import logging
 import os
+import pathlib
 import re
 import shutil
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union
@@ -719,6 +721,30 @@ class URLPlaylistEntry(BasePlaylistEntry):
 
         self._is_downloaded = True
         self.filename = info.expected_filename or ""
+
+        # Save metadata JSON for cached file (for web API usage)
+        if self.filename:
+            try:
+                metadata = {
+                    "title": self.title,
+                    "url": self.url,
+                    "webpage_url": getattr(self.info, 'webpage_url', self.url),
+                    "id": self.info.video_id,
+                    "duration": self.duration,
+                    "thumbnail": self.thumbnail_url,
+                    "uploader": self.info.get("uploader", None),
+                    "channel": self.info.get("channel", None),
+                    "extractor": self.info.extractor,
+                    "extractor_key": self.info.extractor_key,
+                }
+                meta_file_path = pathlib.Path(self.filename).with_suffix(
+                    pathlib.Path(self.filename).suffix + ".meta.json"
+                )
+                with open(meta_file_path, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, ensure_ascii=False, indent=2)
+                log.debug("Saved metadata to:  %s", meta_file_path)
+            except Exception as e:
+                log.warning("Failed to save metadata JSON: %s", str(e))
 
         # It should be safe to get our newly downloaded file size now...
         # This should also leave self.downloaded_bytes set to 0 if the file is in cache already.
