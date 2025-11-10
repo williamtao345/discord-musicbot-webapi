@@ -2577,7 +2577,7 @@ class MusicBot(discord.Client):
 
         e.set_author(
             name=author_name,
-            url="https://github.com/Just-Some-Bots/MusicBot",
+            url="https://github.com/williamtao345/discord-musicbot-webapi",
             icon_url=avatar_url,
         )
         return e
