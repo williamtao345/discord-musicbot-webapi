@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Bot Controller</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        h2 {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        .current-song {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .queue-item {
+            padding: 10px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #volumeSlider {
+            width: 200px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Music Bot Controller</h1>
+
+        <!-- API Key -->
+        <div class="section">
+            <h2>API Key</h2>
+            <input type="password" id="apiKey" placeholder="Enter API key">
+            <button onclick="saveApiKey()">Save</button>
+            <div id="apiMessage" class="message hidden"></div>
+        </div>
+
+        <!-- Now Playing -->
+        <div class="section">
+            <h2>Now Playing</h2>
+            <div class="current-song" id="nowPlaying">
+                <div>No song playing</div>
+            </div>
+            <div>Status: <span id="status">Unknown</span></div>
+        </div>
+
+        <!-- Controls -->
+        <div class="section">
+            <h2>Controls</h2>
+            <button onclick="play()">Play</button>
+            <button onclick="pause()">Pause</button>
+            <button onclick="skip()">Skip</button>
+            <button onclick="stop()" class="danger">Stop</button>
+            <div id="controlMessage" class="message hidden"></div>
+        </div>
+
+        <!-- Volume -->
+        <div class="section">
+            <h2>Volume</h2>
+            <input type="range" id="volumeSlider" min="0" max="200" value="25" oninput="updateVolume()">
+            <span id="volumeDisplay">25%</span>
+        </div>
+
+        <!-- Add Song -->
+        <div class="section">
+            <h2>Add Song</h2>
+            <input type="text" id="songInput" placeholder="YouTube URL or search query">
+            <button onclick="addSong()">Add</button>
+            <div id="addMessage" class="message hidden"></div>
+        </div>
+
+        <!-- Queue -->
+        <div class="section">
+            <h2>Queue (<span id="queueCount">0</span>)</h2>
+            <div id="queueList"></div>
+            <button onclick="shuffle()">Shuffle</button>
+            <button onclick="clearQueue()" class="danger">Clear</button>
+            <button onclick="refresh()">Refresh</button>
+            <div id="queueMessage" class="message hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let API_KEY = localStorage.getItem('api_key') || '';
+        let API_URL = window.location.origin;
+
+        // Initialize
+        if (API_KEY) {
+            document.getElementById('apiKey').value = API_KEY;
+            refresh();
+        }
+
+        function headers() {
+            return {
+                'Content-Type': 'application/json',
+                'X-API-Key': API_KEY
+            };
+        }
+
+        function showMessage(id, text, isError = false) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = `message ${isError ? 'error' : 'success'}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        function saveApiKey() {
+            API_KEY = document.getElementById('apiKey').value;
+            localStorage.setItem('api_key', API_KEY);
+            showMessage('apiMessage', 'API key saved');
+            refresh();
+        }
+
+        async function refresh() {
+            if (!API_KEY) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/status`, { headers: headers() });
+                const data = await res.json();
+
+                // Update now playing
+                if (data.player_state.current_song) {
+                    const song = data.player_state.current_song;
+                    document.getElementById('nowPlaying').innerHTML = `
+                        <strong>${song.title}</strong><br>
+                        ${song.author || 'Unknown'} • ${formatTime(song.duration)}
+                    `;
+                } else {
+                    document.getElementById('nowPlaying').textContent = 'No song playing';
+                }
+
+                // Update status
+                document.getElementById('status').textContent = data.player_state.state;
+
+                // Update volume
+                const vol = Math.round(data.player_state.volume * 100);
+                document.getElementById('volumeSlider').value = vol;
+                document.getElementById('volumeDisplay').textContent = vol + '%';
+
+                // Update queue
+                updateQueue(data.queue);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateQueue(queue) {
+            document.getElementById('queueCount').textContent = queue.total_entries;
+            const list = document.getElementById('queueList');
+
+            if (queue.entries.length === 0) {
+                list.innerHTML = '<div style="color: #999;">Queue is empty</div>';
+                return;
+            }
+
+            list.innerHTML = queue.entries.map((song, i) => `
+                <div class="queue-item">
+                    <div>
+                        <strong>${i + 1}. ${song.title}</strong><br>
+                        <small>${song.author || 'Unknown'} • ${formatTime(song.duration)}</small>
+                    </div>
+                    <button onclick="removeSong(${i})" class="danger">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(sec) {
+            if (!sec) return 'Unknown';
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        async function play() {
+            try {
+                const res = await fetch(`${API_URL}/api/playback/play`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('controlMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('controlMessage', err.message, true);
+            }
+        }
+
+        async function pause() {
+            try {
+                const res = await fetch(`${API_URL}/api/playback/pause`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('controlMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('controlMessage', err.message, true);
+            }
+        }
+
+        async function skip() {
+            try {
+                const res = await fetch(`${API_URL}/api/playback/skip`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('controlMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('controlMessage', err.message, true);
+            }
+        }
+
+        async function stop() {
+            try {
+                const res = await fetch(`${API_URL}/api/playback/stop`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('controlMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('controlMessage', err.message, true);
+            }
+        }
+
+        async function updateVolume() {
+            const vol = parseInt(document.getElementById('volumeSlider').value);
+            document.getElementById('volumeDisplay').textContent = vol + '%';
+
+            try {
+                await fetch(`${API_URL}/api/settings/volume`, {
+                    method: 'PUT',
+                    headers: headers(),
+                    body: JSON.stringify({ volume: vol / 100 })
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function addSong() {
+            const query = document.getElementById('songInput').value.trim();
+            if (!query) {
+                showMessage('addMessage', 'Enter a URL or search query', true);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/queue/add`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify({ query })
+                });
+                const data = await res.json();
+                showMessage('addMessage', data.message, !data.success);
+                if (data.success) {
+                    document.getElementById('songInput').value = '';
+                    refresh();
+                }
+            } catch (err) {
+                showMessage('addMessage', err.message, true);
+            }
+        }
+
+        async function removeSong(index) {
+            try {
+                const res = await fetch(`${API_URL}/api/queue/${index}`, {
+                    method: 'DELETE',
+                    headers: headers()
+                });
+                const data = await res.json();
+                showMessage('queueMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('queueMessage', err.message, true);
+            }
+        }
+
+        async function shuffle() {
+            try {
+                const res = await fetch(`${API_URL}/api/queue/shuffle`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('queueMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('queueMessage', err.message, true);
+            }
+        }
+
+        async function clearQueue() {
+            if (!confirm('Clear entire queue?')) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/queue`, {
+                    method: 'DELETE',
+                    headers: headers(),
+                    body: '{}'
+                });
+                const data = await res.json();
+                showMessage('queueMessage', data.message, !data.success);
+                refresh();
+            } catch (err) {
+                showMessage('queueMessage', err.message, true);
+            }
+        }
+
+        // Auto-refresh every 5 seconds
+        setInterval(refresh, 5000);
+    </script>
+</body>
+</html>

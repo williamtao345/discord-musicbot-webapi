@@ -3,8 +3,10 @@ Main FastAPI application for Discord MusicBot Web API
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import Optional
 import logging
+import os
 
 from .routes import status, playback, queue, settings
 from . import dependencies, auth
@@ -35,26 +37,18 @@ app.include_router(playback.router)
 app.include_router(queue.router)
 app.include_router(settings.router)
 
-
-@app.get("/")
-async def root():
-    """
-    Root endpoint - API information
-    """
-    return {
-        "name": "Discord MusicBot API",
-        "version": "1.0.0",
-        "status": "running",
-        "docs": "/docs"
-    }
-
-
 @app.get("/health")
 async def health():
     """
     Health check endpoint
     """
     return {"status": "healthy"}
+
+
+# Mount static files (must be last to not override API routes)
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 
 def initialize_api(bot_instance, api_key: Optional[str] = None):

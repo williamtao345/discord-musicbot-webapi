@@ -29,7 +29,6 @@ async def add_song(request: AddSongRequest):
 
         # Extract info using yt-dlp
         info = await bot.downloader.extract_info(
-            player.playlist.loop,
             request.query,
             download=False,
             process=True
@@ -42,10 +41,10 @@ async def add_song(request: AddSongRequest):
         if 'entries' in info and info['entries']:
             # It's a playlist
             num_songs = 0
-            for entry in info['entries']:
-                if entry:
+            for entry_info in info['entries']:
+                if entry_info:
                     try:
-                        await player.playlist.add_entry_from_info(entry, head=False)
+                        entry, position = await player.playlist.add_entry_from_info(entry_info, head=False)
                         num_songs += 1
                     except Exception as e:
                         # Skip entries that fail
@@ -53,7 +52,7 @@ async def add_song(request: AddSongRequest):
             return SuccessResponse(message=f"Added {num_songs} songs from playlist to queue")
         else:
             # Single song
-            entry = await player.playlist.add_entry_from_info(info, head=False)
+            entry, position = await player.playlist.add_entry_from_info(info, head=False)
             if entry:
                 return SuccessResponse(message=f"Added '{entry.title}' to queue")
             else:
