@@ -1,0 +1,17 @@
+# Netscape HTTP Cookie File
+# This file is used by yt-dlp to authenticate with websites like YouTube, Bilibili, etc.
+# This allows the bot to access age-restricted, member-only, or region-locked content.
+#
+# HOW TO GENERATE:
+# 1. Install a browser extension like "Get cookies.txt LOCALLY" (Chrome/Firefox)
+# 2. Log in to the website (YouTube, Bilibili, etc.) in your browser
+# 3. Use the extension to export cookies in Netscape format
+# 4. Save the exported file as "cookies.txt" in this config directory
+#
+# NOTE: Keep this file private! It contains your authentication credentials.
+# The real cookies.txt file is already in .gitignore to prevent accidental commits.
+#
+# FORMAT: domain  flag  path  secure  expiration  name  value
+# Example (do not use these fake values):
+# .bilibili.com	TRUE	/	FALSE	1234567890	SESSDATA	fake_session_data_here
+# .youtube.com	TRUE	/	FALSE	1234567890	SID	fake_sid_value_here

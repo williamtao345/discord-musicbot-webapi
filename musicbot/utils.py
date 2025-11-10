@@ -61,12 +61,9 @@ def _add_logger_level(levelname: str, level: int, *, func_name: str = "") -> Non
 
     # TODO: this is cool and all, but there is likely a better way to do this.
     # we should probably be extending logging.getLoggerClass() instead
-    exec(  # pylint: disable=exec-used
-        _func_prototype.format(logger_func_name=func_name, levelname=levelname),
-        logging.__dict__,
-        locals(),
-    )
-    setattr(logging.Logger, func_name, eval(func_name))  # pylint: disable=eval-used
+    local_vars = {}
+    exec(_func_prototype.format(logger_func_name=func_name, levelname=levelname), logging.__dict__, local_vars)
+    setattr(logging.Logger, func_name, local_vars[func_name])  # pylint: disable=eval-used
 
 
 def setup_loggers() -> None:

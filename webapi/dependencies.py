@@ -73,7 +73,14 @@ def get_player(guild_id: Optional[int] = None):
     # Get or create player for this guild
     try:
         player = bot.get_player_in(guild)
+        if player is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No active player in guild {guild_id}. Bot must join a voice channel first."
+            )
         return player
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
