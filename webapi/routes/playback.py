@@ -25,7 +25,7 @@ async def play(request: GuildRequest = Body(default=GuildRequest())):
             return SuccessResponse(message="Playback resumed")
         # If stopped and queue has items, start playing
         elif player.playlist and len(player.playlist.entries) > 0:
-            await player.play()
+            player.play()
             return SuccessResponse(message="Playback started")
         else:
             return SuccessResponse(message="Nothing to play. Queue is empty.")
@@ -69,7 +69,7 @@ async def skip(request: GuildRequest = Body(default=GuildRequest())):
     player = get_player(request.guild_id)
 
     try:
-        await player.skip()
+        player.skip()
         return SuccessResponse(message="Skipped to next song")
     except Exception as e:
         return SuccessResponse(success=False, message=f"Failed to skip: {str(e)}")
