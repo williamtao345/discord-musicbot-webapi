@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Bot Controller</title>
+    <link rel="icon" type="image/png" href="logo.png">
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 50px auto;
             padding: 20px;
+            padding-bottom: 140px;
             background: #f5f5f5;
         }
 
@@ -20,9 +22,22 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin-right: 15px;
+        }
+
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin: 0;
         }
 
         .section {
@@ -33,6 +48,8 @@
 
         .section:last-child {
             border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         h2 {
@@ -48,6 +65,7 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+            box-sizing: border-box;
         }
 
         button {
@@ -100,6 +118,7 @@
             border-radius: 4px;
             margin-bottom: 15px;
             font-weight: bold;
+            font-size: 13px;
         }
 
         .message {
@@ -126,52 +145,123 @@
             width: 200px;
             vertical-align: middle;
         }
+
+        #notificationContainer {
+            position: fixed;
+            bottom: 140px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+
+        .notification {
+            padding: 15px 20px;
+            margin-top: 10px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        #nowPlayingBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: white;
+            border-top: 2px solid #007bff;
+            padding: 0 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        #nowPlayingBar .song-info {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+        }
+
+        #nowPlayingBar h2 {
+            font-size: 14px;
+            margin: 0 0 5px 0;
+            color: #007bff;
+            font-weight: normal;
+        }
+
+        #nowPlayingBar .current-song {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #nowPlayingBar .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        #nowPlayingBar button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #nowPlayingBar button:hover {
+            background: #0056b3;
+        }
+
+        .input-button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-button-group input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .input-button-group button {
+            margin-bottom: 0;
+            margin-right: 0;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Music Bot Controller</h1>
-
-        <!-- API Key -->
-        <div class="section">
-            <h2>API Key</h2>
-            <input type="password" id="apiKey" placeholder="Enter API key">
-            <button onclick="saveApiKey()">Save</button>
-            <div id="apiMessage" class="message hidden"></div>
-        </div>
-
-        <!-- Now Playing -->
-        <div class="section">
-            <h2>Now Playing</h2>
-            <div class="current-song" id="nowPlaying">
-                <div>No song playing</div>
-            </div>
-            <div>Status: <span id="status">Unknown</span></div>
-        </div>
-
-        <!-- Controls -->
-        <div class="section">
-            <h2>Controls</h2>
-            <button onclick="play()">Play</button>
-            <button onclick="pause()">Pause</button>
-            <button onclick="skip()">Skip</button>
-            <button onclick="stop()" class="danger">Stop</button>
-            <div id="controlMessage" class="message hidden"></div>
-        </div>
-
-        <!-- Volume -->
-        <div class="section">
-            <h2>Volume</h2>
-            <input type="range" id="volumeSlider" min="0" max="200" value="25" oninput="updateVolume()">
-            <span id="volumeDisplay">25%</span>
+        <div class="header">
+            <img src="logo.png" alt="Music Bot Logo" class="logo">
+            <h1>Music Bot Controller</h1>
         </div>
 
         <!-- Add Song -->
         <div class="section">
             <h2>Add Song</h2>
-            <input type="text" id="songInput" placeholder="YouTube URL or search query">
-            <button onclick="addSong()">Add</button>
-            <div id="addMessage" class="message hidden"></div>
+            <div class="input-button-group">
+                <input type="text" id="songInput" placeholder="YouTube URL or search query">
+                <button onclick="addSong()">Add</button>
+            </div>
         </div>
 
         <!-- Queue -->
@@ -181,7 +271,6 @@
             <button onclick="shuffle()">Shuffle</button>
             <button onclick="clearQueue()" class="danger">Clear</button>
             <button onclick="refresh()">Refresh</button>
-            <div id="queueMessage" class="message hidden"></div>
         </div>
 
         <!-- Cache Management -->
@@ -192,9 +281,40 @@
             </div>
             <div id="cacheList"></div>
             <button onclick="refreshCache()">Refresh Cache</button>
-            <div id="cacheMessage" class="message hidden"></div>
+        </div>
+
+        <!-- Volume -->
+        <div class="section">
+            <h2>Volume</h2>
+            <input type="range" id="volumeSlider" min="0" max="200" value="25" oninput="updateVolume()">
+            <span id="volumeDisplay">25%</span>
+        </div>
+
+        <!-- API Key -->
+        <div class="section">
+            <h2>API Key</h2>
+            <div class="input-button-group">
+                <input type="password" id="apiKey" placeholder="Enter API key">
+                <button onclick="saveApiKey()">Save</button>
+            </div>
         </div>
     </div>
+
+    <!-- Now Playing Bar (Fixed at Bottom) -->
+    <div id="nowPlayingBar">
+        <div class="song-info">
+            <div class="current-song" id="nowPlaying">
+                <div>No song playing</div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="playPauseBtnBottom" onclick="togglePlayPause()">Play</button>
+            <button id="skipBtnBottom" onclick="skip()">Skip</button>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
 
     <script>
         let API_KEY = localStorage.getItem('api_key') || '';
@@ -215,11 +335,18 @@
         }
 
         function showMessage(id, text, isError = false) {
-            const el = document.getElementById(id);
-            el.textContent = text;
-            el.className = `message ${isError ? 'error' : 'success'}`;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 3000);
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${isError ? 'error' : 'success'}`;
+            notification.textContent = text;
+            container.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(400px)';
+                notification.style.transition = 'all 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         function saveApiKey() {
@@ -247,18 +374,51 @@
                     document.getElementById('nowPlaying').textContent = 'No song playing';
                 }
 
-                // Update status
-                document.getElementById('status').textContent = data.player_state.state;
-
                 // Update volume
                 const vol = Math.round(data.player_state.volume * 100);
                 document.getElementById('volumeSlider').value = vol;
                 document.getElementById('volumeDisplay').textContent = vol + '%';
 
+                // Update control buttons visibility
+                updateControlButtons(data.player_state, data.queue);
+
                 // Update queue
                 updateQueue(data.queue);
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        function updateControlButtons(playerState, queue) {
+            const playPauseBtnBottom = document.getElementById('playPauseBtnBottom');
+            const skipBtnBottom = document.getElementById('skipBtnBottom');
+
+            const state = playerState.state.toLowerCase();
+            const hasQueue = queue.total_entries > 0;
+
+            // Update play/pause button text based on state
+            if (state === 'playing') {
+                playPauseBtnBottom.textContent = 'Pause';
+            } else {
+                playPauseBtnBottom.textContent = 'Play';
+            }
+
+            // Hide skip button if no more songs in queue
+            if (hasQueue) {
+                skipBtnBottom.style.display = 'flex';
+            } else {
+                skipBtnBottom.style.display = 'none';
+            }
+        }
+
+        async function togglePlayPause() {
+            const playPauseBtnBottom = document.getElementById('playPauseBtnBottom');
+            const isPlaying = playPauseBtnBottom.textContent === 'Pause';
+
+            if (isPlaying) {
+                await pause();
+            } else {
+                await play();
             }
         }
 
@@ -322,21 +482,6 @@
         async function skip() {
             try {
                 const res = await fetch(`${API_URL}/api/playback/skip`, {
-                    method: 'POST',
-                    headers: headers(),
-                    body: '{}'
-                });
-                const data = await res.json();
-                showMessage('controlMessage', data.message, !data.success);
-                refresh();
-            } catch (err) {
-                showMessage('controlMessage', err.message, true);
-            }
-        }
-
-        async function stop() {
-            try {
-                const res = await fetch(`${API_URL}/api/playback/stop`, {
                     method: 'POST',
                     headers: headers(),
                     body: '{}'
@@ -485,7 +630,6 @@
 
                 list.innerHTML = data.cached_songs.map(song => {
                     const source = song.source ? song.source.toUpperCase() : 'Unknown';
-                    const sourceIcon = song.source === 'youtube' ? '📺' : song.source === 'bilibili' ? '🎬' : '🎵';
 
                     // Use metadata if available, otherwise parse filename
                     const title = song.title || parseVideoTitle(song.filename);
@@ -500,7 +644,7 @@
                     return `
                         <div class="cache-item">
                             <div>
-                                <strong>${sourceIcon} ${title}</strong><br>
+                                <strong>${title}</strong><br>
                                 <small>${author} • ${duration}</small><br>
                                 <small style="color: #999;">${song.filename}</small>
                             </div>

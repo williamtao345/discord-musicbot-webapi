@@ -41,6 +41,35 @@ Port = 8000
 APIKey = your-secret-key
 ```
 
+### Running as a System Service
+
+To run MusicBot as a systemd service (automatic startup and background operation):
+
+1. **Check service status:**
+   ```bash
+   sudo systemctl status musicbot.service
+   ```
+
+2. **Start/Stop/Restart the service:**
+   ```bash
+   sudo systemctl start musicbot.service
+   sudo systemctl stop musicbot.service
+   sudo systemctl restart musicbot.service
+   ```
+
+3. **Enable/Disable auto-start on boot:**
+   ```bash
+   sudo systemctl enable musicbot.service
+   sudo systemctl disable musicbot.service
+   ```
+
+4. **View logs:**
+   ```bash
+   sudo journalctl -u musicbot.service -f
+   ```
+
+The service file should be located at `/etc/systemd/system/musicbot.service`.
+
 ### How It Works: URL → Music Playback
 
 1. **User Input** → Web interface or API receives URL
