@@ -440,6 +440,41 @@ class Config:
                 "Currently this option does not apply to auto-playlist or songs added to an empty queue."
             ),
         )
+
+        self.webapi_enabled: bool = self.register.init_option(
+            section="WebAPI",
+            option="Enabled",
+            dest="webapi_enabled",
+            default=ConfigDefaults.webapi_enabled,
+            getter="getboolean",
+            comment="Enable the Web API for controlling MusicBot via HTTP REST endpoints.",
+        )
+        self.webapi_host: str = self.register.init_option(
+            section="WebAPI",
+            option="Host",
+            dest="webapi_host",
+            default=ConfigDefaults.webapi_host,
+            comment="Host address to bind the Web API server to. Use 0.0.0.0 to listen on all interfaces.",
+        )
+        self.webapi_port: int = self.register.init_option(
+            section="WebAPI",
+            option="Port",
+            dest="webapi_port",
+            default=ConfigDefaults.webapi_port,
+            getter="getint",
+            comment="Port number for the Web API server.",
+        )
+        self.webapi_api_key: str = self.register.init_option(
+            section="WebAPI",
+            option="APIKey",
+            dest="webapi_api_key",
+            default=ConfigDefaults.webapi_api_key,
+            comment=(
+                "API key for authenticating Web API requests. Leave empty to disable authentication.\n"
+                "Clients must provide this key in the X-API-Key header when making requests."
+            ),
+        )
+
         self.status_message: str = self.register.init_option(
             section="MusicBot",
             option="StatusMessage",
@@ -1313,6 +1348,11 @@ class ConfigDefaults:
 
     ytdlp_use_oauth2: bool = False
     pre_download_next_song: bool = True
+
+    webapi_enabled: bool = False
+    webapi_host: str = "0.0.0.0"
+    webapi_port: int = 8000
+    webapi_api_key: str = ""
 
     song_blocklist: Set[str] = set()
     user_blocklist: Set[int] = set()

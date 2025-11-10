@@ -10,6 +10,32 @@ MusicBot is the original Discord music bot written for [Python](https://www.pyth
 
 ![Main](https://i.imgur.com/FWcHtcS.png)
 
+## Web API (New Feature)
+
+This fork adds a REST API for remote bot control via HTTP. Control playback, manage the queue, and adjust settings from any HTTP client or web dashboard.
+
+**Features:**
+- Playback control (play, pause, skip, stop)
+- Queue management (add, remove, shuffle, clear)
+- Settings control (volume, loop modes)
+- Status endpoints (current track, queue info)
+- API key authentication
+- Interactive docs at `/docs`
+
+**Configuration:** Add to `config/options.ini`:
+```ini
+[WebAPI]
+Enabled = yes
+Host = 0.0.0.0
+Port = 8000
+APIKey = your-secret-key
+```
+
+**Example:**
+```bash
+curl -H "X-API-Key: your-secret-key" http://localhost:8000/api/status
+```
+
 ## Setup
 Setting up the MusicBot is relatively painless - just follow one of the [guides](https://just-some-bots.github.io/MusicBot/). After that, configure the bot to ensure its connection to Discord.
 

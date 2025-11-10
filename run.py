@@ -948,8 +948,53 @@ def main() -> None:
             if not getattr(event_loop, "_sig_handler_set", False):
                 setup_signal_handlers(event_loop, m.on_os_signal)
 
-            # let the MusicBot run free!
-            event_loop.run_until_complete(m.run_musicbot())
+            # Start Web API if enabled
+            webapi_server = None
+            if m.config.webapi_enabled:
+                log.info("Web API is enabled. Starting FastAPI server...")
+                try:
+                    from webapi.main import (  # pylint: disable=import-outside-toplevel
+                        app,
+                        initialize_api,
+                    )
+                    import uvicorn  # pylint: disable=import-outside-toplevel
+
+                    # Initialize the API with bot instance and config
+                    initialize_api(m, m.config.webapi_api_key or None)
+
+                    # Create uvicorn config
+                    config = uvicorn.Config(
+                        app,
+                        host=m.config.webapi_host,
+                        port=m.config.webapi_port,
+                        log_level="info",
+                        loop="asyncio",
+                    )
+                    webapi_server = uvicorn.Server(config)
+
+                    # Run both bot and API server concurrently
+                    async def run_both():
+                        """Run both the Discord bot and Web API server"""
+                        await asyncio.gather(
+                            m.run_musicbot(),
+                            webapi_server.serve()
+                        )
+
+                    event_loop.run_until_complete(run_both())
+                    log.info(
+                        f"Web API started successfully on http://{m.config.webapi_host}:{m.config.webapi_port}"
+                    )
+                except ImportError as e:
+                    log.warning(
+                        f"Could not start Web API due to missing dependencies: {e}"
+                    )
+                    log.warning("Install dependencies with: pip install fastapi uvicorn[standard]")
+                    log.warning("Running bot without Web API...")
+                    event_loop.run_until_complete(m.run_musicbot())
+            else:
+                # let the MusicBot run free!
+                event_loop.run_until_complete(m.run_musicbot())
+
             retries = 0
 
         except (ssl.SSLCertVerificationError, ClientConnectorCertificateError) as e:
