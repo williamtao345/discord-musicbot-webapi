@@ -175,10 +175,8 @@ class MusicPlayer(EventEmitter, Serializable):
         """
         Seek to a specific position in the current song.
 
-        This works by:
-        1. Setting the start_time on the current entry
-        2. Re-adding the entry to the front of the queue
-        3. Killing current playback (which triggers playing the next entry)
+        This works by pausing playback, replacing the audio source with a new
+        one that starts at the specified position, then resuming.
 
         :param: position:  Time in seconds to seek to.
         :returns:  True if seek was successful, False otherwise.
@@ -205,17 +203,53 @@ class MusicPlayer(EventEmitter, Serializable):
             log.warning("Seek position %s exceeds duration %s", position, entry.duration)
             return False
 
-        # Set the new start time
-        entry.set_start_time(position)
+        if not self._source or not self.voice_client or not self.voice_client._player:
+            log.warning("Cannot seek: no active source or voice client")
+            return False
 
-        # Re-add to front of queue
-        self.playlist.entries.appendleft(entry)
+        player = self.voice_client._player
 
-        # Kill current playback - this will trigger _playback_finished
-        # which will then play the next entry (our re-added entry)
-        self._current_entry = None  # Prevent repeat/loop logic from duplicating
-        self._kill_current_player()
+        # Pause the audio player to stop reading from the current source
+        # This makes the reader loop wait on _resumed event
+        was_playing = player._resumed.is_set()
+        player.pause()
 
+        # Keep reference to old source for cleanup
+        old_source = self._source
+
+        # Build ffmpeg options with the new seek position
+        boptions = f"-nostdin -ss {position}"
+        aoptions = entry.aoptions if hasattr(entry, 'aoptions') else "-vn"
+
+        # Create new source starting at the seek position
+        stderr_io = io.BytesIO()
+        self._source = SourcePlaybackCounter(
+            PCMVolumeTransformer(
+                FFmpegPCMAudio(
+                    entry.filename,
+                    before_options=boptions,
+                    options=aoptions,
+                    stderr=stderr_io,
+                ),
+                self.volume,
+            ),
+            start_time=position,
+            playback_speed=entry.playback_speed,
+        )
+
+        # Replace the source in the voice client's player
+        player.source = self._source
+
+        # Cleanup old source after replacement
+        old_source.cleanup()
+
+        # Resume playback if it was playing before
+        if was_playing:
+            player.resume()
+
+        log.noise(  # type: ignore[attr-defined]
+            "Seek completed: new source at position %s", position
+        )
         return True
 
     def skip(self) -> None:
