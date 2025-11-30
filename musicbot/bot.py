@@ -4899,24 +4899,8 @@ class MusicBot(discord.Client):
 
             self.server_data[guild.id].last_np_msg = message
 
-            # Get the dashboard URL dynamically
-            import aiohttp
-
-            # Get the actual IP address
-            webapi_host = self.config.webapi_host
-            if webapi_host == "0.0.0.0" or webapi_host == "":
-                # Get external/public IP address
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get("https://api.ipify.org", timeout=aiohttp.ClientTimeout(total=3)) as resp:
-                            if resp.status == 200:
-                                webapi_host = await resp.text()
-                            else:
-                                webapi_host = "localhost"
-                except Exception:
-                    webapi_host = "localhost"
-
-            dashboard_url = f"http://{webapi_host}:{self.config.webapi_port}/"
+            # Get the dashboard URL from config, or fall back to GitHub repo
+            dashboard_url = self.config.webapi_dashboard_url or "https://github.com/Just-Some-Bots/MusicBot"
 
             response_message = self.str.get("cmd-summon-reply", "Connected to `{0.name}`").format(
                 author.voice.channel

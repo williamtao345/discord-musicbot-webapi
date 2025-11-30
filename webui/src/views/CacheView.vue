@@ -1,7 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { HardDrive, Trash2, RefreshCw, Music } from 'lucide-vue-next'
+import { HardDrive, Trash2, RefreshCw, Music, Plus, Loader } from 'lucide-vue-next'
 import { cacheApi } from '../api'
+import { useQueue } from '../composables/useQueue'
+
+const { addSong } = useQueue()
+const addingFilename = ref(null)
 
 const cacheData = ref(null)
 const isLoading = ref(false)
@@ -26,6 +30,19 @@ const deleteFile = async (filename) => {
     await fetchCache()
   } catch (err) {
     console.error('Failed to delete:', err)
+  }
+}
+
+const addToQueue = async (song) => {
+  if (addingFilename.value) return
+  const query = song.url || song.filename
+  addingFilename.value = song.filename
+  try {
+    await addSong(query)
+  } catch (err) {
+    console.error('Failed to add to queue:', err)
+  } finally {
+    addingFilename.value = null
   }
 }
 
@@ -79,6 +96,15 @@ onMounted(fetchCache)
             <span>{{ formatSize(song.size_mb) }}</span>
           </div>
         </div>
+        <button
+          class="add-queue-btn"
+          @click="addToQueue(song)"
+          :disabled="addingFilename === song.filename"
+          title="Add to queue"
+        >
+          <Loader v-if="addingFilename === song.filename" :size="16" class="spinning" />
+          <Plus v-else :size="16" />
+        </button>
         <button class="delete-btn" @click="deleteFile(song.filename)" title="Delete">
           <Trash2 :size="16" />
         </button>
@@ -226,6 +252,7 @@ onMounted(fetchCache)
   color: var(--text-muted);
 }
 
+.add-queue-btn,
 .delete-btn {
   width: 36px;
   height: 36px;
@@ -238,6 +265,16 @@ onMounted(fetchCache)
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+}
+
+.add-queue-btn:hover:not(:disabled) {
+  background: var(--blurple);
+  color: var(--header-primary);
+}
+
+.add-queue-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .delete-btn:hover {

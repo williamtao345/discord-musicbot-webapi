@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from 'vue'
 import NavSidebar from './components/NavSidebar.vue'
 import MainHeader from './components/MainHeader.vue'
 import PlaybackBar from './components/PlaybackBar.vue'
+import ApiKeyPopup from './components/ApiKeyPopup.vue'
 import { usePlayerStore } from './composables/usePlayerStore'
 
 const { startPolling, stopPolling } = usePlayerStore()
@@ -26,6 +27,7 @@ onUnmounted(() => {
       </div>
     </main>
     <PlaybackBar />
+    <ApiKeyPopup />
   </div>
 </template>
 

@@ -474,6 +474,16 @@ class Config:
                 "Clients must provide this key in the X-API-Key header when making requests."
             ),
         )
+        self.webapi_dashboard_url: str = self.register.init_option(
+            section="WebAPI",
+            option="DashboardURL",
+            dest="webapi_dashboard_url",
+            default=ConfigDefaults.webapi_dashboard_url,
+            comment=(
+                "Public URL for the web dashboard. This is displayed to users after !summon.\n"
+                "If left empty, defaults to the MusicBot GitHub repository."
+            ),
+        )
 
         self.status_message: str = self.register.init_option(
             section="MusicBot",
@@ -1353,6 +1363,7 @@ class ConfigDefaults:
     webapi_host: str = "0.0.0.0"
     webapi_port: int = 8000
     webapi_api_key: str = ""
+    webapi_dashboard_url: str = ""
 
     song_blocklist: Set[str] = set()
     user_blocklist: Set[int] = set()

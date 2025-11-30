@@ -12,7 +12,7 @@ export function usePlayback() {
       if (isPlaying.value) {
         await playbackApi.pause()
       } else {
-        await playbackApi.resume()
+        await playbackApi.play()
       }
       await fetchStatus()
     } catch (err) {

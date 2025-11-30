@@ -1,9 +1,10 @@
 """
 Main FastAPI application for Discord MusicBot Web API
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import Optional
 import logging
 import os
@@ -46,10 +47,34 @@ async def health():
     return {"status": "healthy"}
 
 
-# Mount static files (must be last to not override API routes)
+# Static files directory
 static_dir = os.path.join(os.path.dirname(__file__), "static")
+
+# SPA catch-all route - serves index.html for frontend routes
+# This must be defined before mounting static files
+@app.get("/{full_path:path}")
+async def serve_spa(request: Request, full_path: str):
+    """Serve the SPA for all non-API routes"""
+    # Don't intercept API routes or other known paths
+    if full_path.startswith("api/") or full_path in ("health", "docs", "redoc", "openapi.json"):
+        return None
+
+    # Check if requesting a static file (has extension)
+    if "." in full_path.split("/")[-1]:
+        file_path = os.path.join(static_dir, full_path)
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
+    # For all other routes, serve index.html (SPA fallback)
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+
+    return {"detail": "Not Found"}
+
+# Mount static files for assets
 if os.path.exists(static_dir):
-    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+    app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
 
 
 def initialize_api(bot_instance, api_key: Optional[str] = None):
