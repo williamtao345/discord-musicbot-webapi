@@ -111,7 +111,7 @@ const handleToggleLoop = () => {
   background: var(--bg-secondary);
   border-top: 1px solid var(--bg-tertiary);
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: minmax(0, 1fr) 600px minmax(0, 1fr);
   align-items: center;
   padding: 0 16px;
   z-index: 100;
@@ -122,6 +122,8 @@ const handleToggleLoop = () => {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .np-art {
@@ -258,13 +260,10 @@ const handleToggleLoop = () => {
   width: 100px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .now-playing-bar {
     left: 60px;
-    grid-template-columns: 1fr 1fr;
-  }
-  .np-right {
-    display: none;
+    grid-template-columns: minmax(0, 1fr) 400px minmax(0, 1fr);
   }
 }
 </style>
