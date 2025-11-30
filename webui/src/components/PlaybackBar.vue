@@ -111,7 +111,7 @@ const handleToggleLoop = () => {
   background: var(--bg-secondary);
   border-top: 1px solid var(--bg-tertiary);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 600px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
   align-items: center;
   padding: 0 16px;
   z-index: 100;
@@ -263,7 +263,7 @@ const handleToggleLoop = () => {
 @media (max-width: 768px) {
   .now-playing-bar {
     left: 60px;
-    grid-template-columns: minmax(0, 1fr) 400px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr);
   }
 }
 </style>
