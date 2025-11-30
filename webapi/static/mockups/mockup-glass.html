@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Bot - Glassmorphism Theme</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --accent: #ec4899;
+            --accent-secondary: #8b5cf6;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #4c1d95 50%, #6b21a8 75%, #86198f 100%);
+            z-index: -2;
+        }
+
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            z-index: -1;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .blob-1 {
+            width: 600px;
+            height: 600px;
+            background: #ec4899;
+            top: -200px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            width: 500px;
+            height: 500px;
+            background: #8b5cf6;
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            width: 400px;
+            height: 400px;
+            background: #06b6d4;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, -50px) scale(1.1); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(30px, 50px) scale(1.05); }
+        }
+
+        /* App Layout */
+        .app {
+            min-height: 100vh;
+            padding: 24px;
+            padding-bottom: 140px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Glass Panel */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 320px;
+            padding: 12px 20px 12px 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .status-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 30px;
+            font-size: 13px;
+            color: #4ade80;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Now Playing Card */
+        .now-playing-card {
+            padding: 32px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .np-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--accent);
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            left: -50px;
+            top: -50px;
+        }
+
+        .np-art {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .np-info {
+            flex: 1;
+            position: relative;
+        }
+
+        .np-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .np-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .np-artist {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .np-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .np-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-primary);
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .np-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .np-btn.play {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border: none;
+            font-size: 24px;
+        }
+
+        .np-btn.play:hover {
+            transform: scale(1.08);
+        }
+
+        .np-progress {
+            max-width: 500px;
+        }
+
+        .progress-times {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .progress-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            width: 35%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border-radius: 3px;
+        }
+
+        /* Panel */
+        .panel {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .panel-badge {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Song List */
+        .song-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .song-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .song-art {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .song-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .song-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .song-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .song-add {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+            font-size: 20px;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .song-item:hover .song-add {
+            opacity: 1;
+        }
+
+        .song-add:hover {
+            transform: scale(1.1);
+        }
+
+        /* Cache Stats */
+        .cache-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .cached-art {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.1) 100%);
+        }
+
+        .cache-size {
+            color: #4ade80;
+        }
+
+        /* Queue Panel */
+        .queue-panel {
+            position: sticky;
+            top: 24px;
+        }
+
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .queue-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .queue-item.active {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .queue-num {
+            width: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .queue-item.active .queue-num {
+            color: var(--accent);
+        }
+
+        .queue-art {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .queue-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .queue-artist {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .queue-duration {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .queue-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .queue-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .queue-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .queue-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        /* Control Bar */
+        .control-bar {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            height: 90px;
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+        }
+
+        .bar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 280px;
+        }
+
+        .bar-art {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .bar-info h4 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .bar-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .bar-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .bar-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .bar-btn.active {
+            color: var(--accent);
+        }
+
+        .bar-btn.play {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            color: white;
+            font-size: 18px;
+        }
+
+        .bar-btn.play:hover {
+            transform: scale(1.05);
+        }
+
+        .bar-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .bar-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            width: 40px;
+            text-align: center;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .bar-fill {
+            width: 35%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 100%);
+            border-radius: 2px;
+        }
+
+        .bar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 160px;
+            justify-content: flex-end;
+        }
+
+        .volume-icon {
+            font-size: 18px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .volume-track {
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .volume-fill {
+            width: 70%;
+            height: 100%;
+            background: var(--text-secondary);
+            border-radius: 2px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-wrapper"></div>
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <div class="app">
+        <div class="container">
+            <!-- Header -->
+            <header class="header glass">
+                <div class="logo">
+                    <div class="logo-icon">&#9835;</div>
+                    <span class="logo-text">Music Bot</span>
+                </div>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <span class="search-icon">&#128269;</span>
+                        <input type="text" class="search-input" placeholder="Search or paste URL...">
+                    </div>
+                    <div class="status-chip">
+                        <span class="status-dot"></span>
+                        Connected to #music-room
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+                <main>
+                    <!-- Now Playing Card -->
+                    <div class="now-playing-card glass">
+                        <div class="np-glow"></div>
+                        <div class="np-art">&#127925;</div>
+                        <div class="np-info">
+                            <div class="np-label">Now Playing</div>
+                            <h1 class="np-title">Levitating</h1>
+                            <p class="np-artist">Dua Lipa</p>
+                            <div class="np-controls">
+                                <button class="np-btn">&#128256;</button>
+                                <button class="np-btn">&#9198;</button>
+                                <button class="np-btn play">&#9208;</button>
+                                <button class="np-btn">&#9197;</button>
+                                <button class="np-btn">&#128257;</button>
+                            </div>
+                            <div class="np-progress">
+                                <div class="progress-times">
+                                    <span>1:12</span>
+                                    <span>3:23</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Music Panel -->
+                    <div class="panel glass">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Add Music</h2>
+                        </div>
+                        <div class="song-list">
+                            <div class="song-item">
+                                <div class="song-art">&#127926;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Blinding Lights</div>
+                                    <div class="song-meta">The Weeknd &bull; 3:22</div>
+                                </div>
+                                <button class="song-add">+</button>
+                            </div>
+                            <div class="song-item">
+                                <div class="song-art">&#127926;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Bohemian Rhapsody</div>
+                                    <div class="song-meta">Queen &bull; 5:55</div>
+                                </div>
+                                <button class="song-add">+</button>
+                            </div>
+                            <div class="song-item">
+                                <div class="song-art">&#127926;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Shape of You</div>
+                                    <div class="song-meta">Ed Sheeran &bull; 3:53</div>
+                                </div>
+                                <button class="song-add">+</button>
+                            </div>
+                            <div class="song-item">
+                                <div class="song-art">&#127926;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Hotel California</div>
+                                    <div class="song-meta">Eagles &bull; 6:30</div>
+                                </div>
+                                <button class="song-add">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cached Songs Panel -->
+                    <div class="panel glass">
+                        <div class="panel-header">
+                            <h2 class="panel-title">Cached Songs</h2>
+                            <span class="panel-badge">127.4 MB</span>
+                        </div>
+                        <div class="cache-stats">
+                            <div class="stat-card">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Songs</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">47:32</div>
+                                <div class="stat-label">Duration</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">127</div>
+                                <div class="stat-label">MB Used</div>
+                            </div>
+                        </div>
+                        <div class="song-list">
+                            <div class="song-item">
+                                <div class="song-art cached">&#128190;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Never Gonna Give You Up</div>
+                                    <div class="song-meta">Rick Astley &bull; 3:33 &bull; <span class="cache-size">8.2 MB</span></div>
+                                </div>
+                                <button class="song-add" style="background: rgba(239, 68, 68, 0.8);">&#128465;</button>
+                            </div>
+                            <div class="song-item">
+                                <div class="song-art cached">&#128190;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Take On Me</div>
+                                    <div class="song-meta">a-ha &bull; 3:46 &bull; <span class="cache-size">9.1 MB</span></div>
+                                </div>
+                                <button class="song-add" style="background: rgba(239, 68, 68, 0.8);">&#128465;</button>
+                            </div>
+                            <div class="song-item">
+                                <div class="song-art cached">&#128190;</div>
+                                <div class="song-details">
+                                    <div class="song-title">Sweet Child O' Mine</div>
+                                    <div class="song-meta">Guns N' Roses &bull; 5:56 &bull; <span class="cache-size">14.3 MB</span></div>
+                                </div>
+                                <button class="song-add" style="background: rgba(239, 68, 68, 0.8);">&#128465;</button>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- Queue Panel -->
+                <aside class="panel glass queue-panel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Queue</h2>
+                        <span class="panel-badge">5 songs</span>
+                    </div>
+                    <div class="queue-list">
+                        <div class="queue-item active">
+                            <span class="queue-num">&#9654;</span>
+                            <div class="queue-art">&#127925;</div>
+                            <div class="queue-info">
+                                <div class="queue-title">Levitating</div>
+                                <div class="queue-artist">Dua Lipa</div>
+                            </div>
+                            <span class="queue-duration">3:23</span>
+                        </div>
+                        <div class="queue-item">
+                            <span class="queue-num">2</span>
+                            <div class="queue-art">&#127925;</div>
+                            <div class="queue-info">
+                                <div class="queue-title">Dance Monkey</div>
+                                <div class="queue-artist">Tones and I</div>
+                            </div>
+                            <span class="queue-duration">3:29</span>
+                        </div>
+                        <div class="queue-item">
+                            <span class="queue-num">3</span>
+                            <div class="queue-art">&#127925;</div>
+                            <div class="queue-info">
+                                <div class="queue-title">Bad Guy</div>
+                                <div class="queue-artist">Billie Eilish</div>
+                            </div>
+                            <span class="queue-duration">3:14</span>
+                        </div>
+                        <div class="queue-item">
+                            <span class="queue-num">4</span>
+                            <div class="queue-art">&#127925;</div>
+                            <div class="queue-info">
+                                <div class="queue-title">Watermelon Sugar</div>
+                                <div class="queue-artist">Harry Styles</div>
+                            </div>
+                            <span class="queue-duration">2:54</span>
+                        </div>
+                        <div class="queue-item">
+                            <span class="queue-num">5</span>
+                            <div class="queue-art">&#127925;</div>
+                            <div class="queue-info">
+                                <div class="queue-title">drivers license</div>
+                                <div class="queue-artist">Olivia Rodrigo</div>
+                            </div>
+                            <span class="queue-duration">4:02</span>
+                        </div>
+                    </div>
+                    <div class="queue-actions">
+                        <button class="queue-btn">&#128256; Shuffle</button>
+                        <button class="queue-btn danger">&#128465; Clear</button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <div class="bar-left">
+            <div class="bar-art">&#127925;</div>
+            <div class="bar-info">
+                <h4>Levitating</h4>
+                <p>Dua Lipa</p>
+            </div>
+        </div>
+        <div class="bar-center">
+            <div class="bar-controls">
+                <button class="bar-btn">&#128256;</button>
+                <button class="bar-btn">&#9198;</button>
+                <button class="bar-btn play">&#9208;</button>
+                <button class="bar-btn">&#9197;</button>
+                <button class="bar-btn">&#128257;</button>
+            </div>
+            <div class="bar-progress">
+                <span class="bar-time">1:12</span>
+                <div class="bar-track">
+                    <div class="bar-fill"></div>
+                </div>
+                <span class="bar-time">3:23</span>
+            </div>
+        </div>
+        <div class="bar-right">
+            <span class="volume-icon">&#128266;</span>
+            <div class="volume-track">
+                <div class="volume-fill"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

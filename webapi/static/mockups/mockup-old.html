@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Bot - Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #4ade80;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content - Add Music Section */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .panel-header .badge {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Search Section */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 20px 16px 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+        }
+
+        /* Search Results / Music Library */
+        .music-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .music-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .music-thumbnail {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .music-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .music-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .music-meta {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-btn {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .add-btn:hover {
+            background: #764ba2;
+            transform: scale(1.1);
+        }
+
+        /* Queue Section */
+        .queue-panel {
+            height: fit-content;
+            max-height: calc(100vh - 200px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .queue-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .queue-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .queue-item.playing {
+            background: rgba(102, 126, 234, 0.2);
+            border-left: 3px solid #667eea;
+        }
+
+        .queue-number {
+            width: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .queue-item.playing .queue-number {
+            color: #667eea;
+        }
+
+        .queue-thumb {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .queue-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .queue-artist {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .queue-duration {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .queue-remove {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .queue-remove:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .queue-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .queue-action-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .queue-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .queue-action-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        /* Cached Songs Section */
+        .cache-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+
+        .cache-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .cached-thumb {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .cache-size {
+            color: #4ade80;
+            font-weight: 500;
+        }
+
+        .music-item.cached {
+            position: relative;
+        }
+
+        .delete-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            border-radius: 8px;
+            color: #f87171;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .cache-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Control Bar */
+        .control-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 90px;
+            background: rgba(22, 33, 62, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+            z-index: 1000;
+        }
+
+        .now-playing {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 300px;
+        }
+
+        .now-playing-art {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .now-playing-info {
+            min-width: 0;
+        }
+
+        .now-playing-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .now-playing-artist {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Playback Controls */
+        .playback-controls {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        .control-btn.play {
+            width: 48px;
+            height: 48px;
+            background: #fff;
+            color: #1a1a2e;
+            font-size: 24px;
+        }
+
+        .control-btn.play:hover {
+            transform: scale(1.1);
+            background: #fff;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .progress-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            width: 45px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            border-radius: 2px;
+            width: 35%;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .progress-bar:hover .progress-fill::after {
+            opacity: 1;
+        }
+
+        /* Volume Control */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 180px;
+        }
+
+        .volume-icon {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: #667eea;
+            border-radius: 2px;
+            width: 70%;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>
+                <span class="icon">&#9835;</span>
+                Music Bot
+            </h1>
+            <div class="server-status">
+                <span class="status-dot"></span>
+                Connected to #music-room
+            </div>
+        </header>
+
+        <!-- Main Content: Add Music -->
+        <main class="main-content">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Add Music</h2>
+                </div>
+
+                <div class="search-container">
+                    <span class="search-icon">&#128269;</span>
+                    <input type="text" class="search-input" placeholder="Search for songs or paste a YouTube URL...">
+                </div>
+
+                <div class="music-grid">
+                    <!-- Search Result 1 -->
+                    <div class="music-item">
+                        <div class="music-thumbnail">&#127926;</div>
+                        <div class="music-info">
+                            <div class="music-title">Blinding Lights</div>
+                            <div class="music-meta">
+                                <span>The Weeknd</span>
+                                <span>&#8226;</span>
+                                <span>3:22</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                    </div>
+
+                    <!-- Search Result 2 -->
+                    <div class="music-item">
+                        <div class="music-thumbnail">&#127926;</div>
+                        <div class="music-info">
+                            <div class="music-title">Bohemian Rhapsody</div>
+                            <div class="music-meta">
+                                <span>Queen</span>
+                                <span>&#8226;</span>
+                                <span>5:55</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                    </div>
+
+                    <!-- Search Result 3 -->
+                    <div class="music-item">
+                        <div class="music-thumbnail">&#127926;</div>
+                        <div class="music-info">
+                            <div class="music-title">Shape of You</div>
+                            <div class="music-meta">
+                                <span>Ed Sheeran</span>
+                                <span>&#8226;</span>
+                                <span>3:53</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                    </div>
+
+                    <!-- Search Result 4 -->
+                    <div class="music-item">
+                        <div class="music-thumbnail">&#127926;</div>
+                        <div class="music-info">
+                            <div class="music-title">Uptown Funk</div>
+                            <div class="music-meta">
+                                <span>Bruno Mars</span>
+                                <span>&#8226;</span>
+                                <span>4:30</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                    </div>
+
+                    <!-- Search Result 5 -->
+                    <div class="music-item">
+                        <div class="music-thumbnail">&#127926;</div>
+                        <div class="music-info">
+                            <div class="music-title">Hotel California</div>
+                            <div class="music-meta">
+                                <span>Eagles</span>
+                                <span>&#8226;</span>
+                                <span>6:30</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cached Songs Section -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Cached Songs</h2>
+                    <span class="badge cache-badge">127.4 MB</span>
+                </div>
+
+                <div class="cache-stats">
+                    <span class="stat-item">
+                        <span class="stat-value">12</span>
+                        <span class="stat-label">songs</span>
+                    </span>
+                    <span class="stat-divider"></span>
+                    <span class="stat-item">
+                        <span class="stat-value">47:32</span>
+                        <span class="stat-label">total</span>
+                    </span>
+                </div>
+
+                <div class="music-grid">
+                    <!-- Cached Item 1 -->
+                    <div class="music-item cached">
+                        <div class="music-thumbnail cached-thumb">&#128190;</div>
+                        <div class="music-info">
+                            <div class="music-title">Never Gonna Give You Up</div>
+                            <div class="music-meta">
+                                <span>Rick Astley</span>
+                                <span>&#8226;</span>
+                                <span>3:33</span>
+                                <span>&#8226;</span>
+                                <span class="cache-size">8.2 MB</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                        <button class="delete-btn">&#128465;</button>
+                    </div>
+
+                    <!-- Cached Item 2 -->
+                    <div class="music-item cached">
+                        <div class="music-thumbnail cached-thumb">&#128190;</div>
+                        <div class="music-info">
+                            <div class="music-title">Take On Me</div>
+                            <div class="music-meta">
+                                <span>a-ha</span>
+                                <span>&#8226;</span>
+                                <span>3:46</span>
+                                <span>&#8226;</span>
+                                <span class="cache-size">9.1 MB</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                        <button class="delete-btn">&#128465;</button>
+                    </div>
+
+                    <!-- Cached Item 3 -->
+                    <div class="music-item cached">
+                        <div class="music-thumbnail cached-thumb">&#128190;</div>
+                        <div class="music-info">
+                            <div class="music-title">Sweet Child O' Mine</div>
+                            <div class="music-meta">
+                                <span>Guns N' Roses</span>
+                                <span>&#8226;</span>
+                                <span>5:56</span>
+                                <span>&#8226;</span>
+                                <span class="cache-size">14.3 MB</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                        <button class="delete-btn">&#128465;</button>
+                    </div>
+
+                    <!-- Cached Item 4 -->
+                    <div class="music-item cached">
+                        <div class="music-thumbnail cached-thumb">&#128190;</div>
+                        <div class="music-info">
+                            <div class="music-title">Smells Like Teen Spirit</div>
+                            <div class="music-meta">
+                                <span>Nirvana</span>
+                                <span>&#8226;</span>
+                                <span>5:01</span>
+                                <span>&#8226;</span>
+                                <span class="cache-size">12.1 MB</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                        <button class="delete-btn">&#128465;</button>
+                    </div>
+
+                    <!-- Cached Item 5 -->
+                    <div class="music-item cached">
+                        <div class="music-thumbnail cached-thumb">&#128190;</div>
+                        <div class="music-info">
+                            <div class="music-title">Thunderstruck</div>
+                            <div class="music-meta">
+                                <span>AC/DC</span>
+                                <span>&#8226;</span>
+                                <span>4:52</span>
+                                <span>&#8226;</span>
+                                <span class="cache-size">11.8 MB</span>
+                            </div>
+                        </div>
+                        <button class="add-btn">+</button>
+                        <button class="delete-btn">&#128465;</button>
+                    </div>
+                </div>
+
+                <div class="cache-actions">
+                    <button class="queue-action-btn">
+                        &#128260; Refresh
+                    </button>
+                    <button class="queue-action-btn danger">
+                        &#128465; Clear All
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Queue Panel -->
+        <aside class="panel queue-panel">
+            <div class="panel-header">
+                <h2>Queue</h2>
+                <span class="badge">5 songs</span>
+            </div>
+
+            <div class="queue-list">
+                <!-- Currently Playing -->
+                <div class="queue-item playing">
+                    <span class="queue-number">&#9654;</span>
+                    <div class="queue-thumb">&#127925;</div>
+                    <div class="queue-info">
+                        <div class="queue-title">Levitating</div>
+                        <div class="queue-artist">Dua Lipa</div>
+                    </div>
+                    <span class="queue-duration">3:23</span>
+                </div>
+
+                <!-- Queue Item 2 -->
+                <div class="queue-item">
+                    <span class="queue-number">2</span>
+                    <div class="queue-thumb">&#127925;</div>
+                    <div class="queue-info">
+                        <div class="queue-title">Dance Monkey</div>
+                        <div class="queue-artist">Tones and I</div>
+                    </div>
+                    <span class="queue-duration">3:29</span>
+                    <button class="queue-remove">&#10005;</button>
+                </div>
+
+                <!-- Queue Item 3 -->
+                <div class="queue-item">
+                    <span class="queue-number">3</span>
+                    <div class="queue-thumb">&#127925;</div>
+                    <div class="queue-info">
+                        <div class="queue-title">Bad Guy</div>
+                        <div class="queue-artist">Billie Eilish</div>
+                    </div>
+                    <span class="queue-duration">3:14</span>
+                    <button class="queue-remove">&#10005;</button>
+                </div>
+
+                <!-- Queue Item 4 -->
+                <div class="queue-item">
+                    <span class="queue-number">4</span>
+                    <div class="queue-thumb">&#127925;</div>
+                    <div class="queue-info">
+                        <div class="queue-title">Watermelon Sugar</div>
+                        <div class="queue-artist">Harry Styles</div>
+                    </div>
+                    <span class="queue-duration">2:54</span>
+                    <button class="queue-remove">&#10005;</button>
+                </div>
+
+                <!-- Queue Item 5 -->
+                <div class="queue-item">
+                    <span class="queue-number">5</span>
+                    <div class="queue-thumb">&#127925;</div>
+                    <div class="queue-info">
+                        <div class="queue-title">drivers license</div>
+                        <div class="queue-artist">Olivia Rodrigo</div>
+                    </div>
+                    <span class="queue-duration">4:02</span>
+                    <button class="queue-remove">&#10005;</button>
+                </div>
+            </div>
+
+            <div class="queue-actions">
+                <button class="queue-action-btn">
+                    &#128256; Shuffle
+                </button>
+                <button class="queue-action-btn danger">
+                    &#128465; Clear
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <!-- Now Playing -->
+        <div class="now-playing">
+            <div class="now-playing-art">&#127925;</div>
+            <div class="now-playing-info">
+                <div class="now-playing-title">Levitating</div>
+                <div class="now-playing-artist">Dua Lipa</div>
+            </div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="playback-controls">
+            <div class="control-buttons">
+                <button class="control-btn" title="Shuffle">&#128256;</button>
+                <button class="control-btn" title="Previous">&#9198;</button>
+                <button class="control-btn play" title="Play/Pause">&#9654;</button>
+                <button class="control-btn" title="Next">&#9197;</button>
+                <button class="control-btn" title="Repeat">&#128257;</button>
+            </div>
+            <div class="progress-container">
+                <span class="progress-time">1:12</span>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-time">3:23</span>
+            </div>
+        </div>
+
+        <!-- Volume Control -->
+        <div class="volume-control">
+            <span class="volume-icon">&#128266;</span>
+            <div class="volume-slider">
+                <div class="volume-fill"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

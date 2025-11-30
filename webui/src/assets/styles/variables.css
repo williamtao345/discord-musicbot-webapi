@@ -1,0 +1,20 @@
+:root {
+  /* Background colors */
+  --bg-tertiary: #202225;
+  --bg-secondary: #2f3136;
+  --bg-primary: #36393f;
+  --bg-accent: #40444b;
+
+  /* Brand colors */
+  --blurple: #5865F2;
+  --blurple-hover: #4752c4;
+  --green: #3ba55c;
+  --red: #ed4245;
+  --yellow: #faa61a;
+
+  /* Text colors */
+  --text-normal: #dcddde;
+  --text-muted: #72767d;
+  --text-link: #00aff4;
+  --header-primary: #ffffff;
+}

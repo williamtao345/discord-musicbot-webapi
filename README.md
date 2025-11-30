@@ -15,31 +15,46 @@ MusicBot is the original Discord music bot written for [Python](https://www.pyth
 This fork adds a REST API and web interface for remote bot control via HTTP.
 
 ### Web Interface
-Visit `http://localhost:8000/` for an interactive control panel:
-- 🎵 Playback controls (play, pause, skip, stop)
-- 📋 Queue management (add, remove, shuffle, clear)
-- 🔊 Volume control with slider
-- 💾 Cache management (view and delete cached songs)
-- 📊 Real-time status updates (auto-refresh every 5s)
+
+A modern Vue.js web interface is included and pre-built. When the bot starts with WebAPI enabled, visit `http://localhost:8000/` for the control panel.
+
+**Features:**
+- **Now Playing** - Real-time display of current track with progress bar
+- **Playback Controls** - Play, pause, skip, stop, shuffle, loop
+- **Queue Management** - View queue, remove tracks, shuffle, clear
+- **Search/Add** - Add songs by URL or search query
+- **Settings** - Configure API key for authentication
+- **Cache Management** - View and delete cached audio files
+
+The interface polls the backend every 2 seconds for live updates.
 
 ### REST API Endpoints
 
-**Playback:** `/api/playback/{play,pause,skip,stop}`
-**Queue:** `/api/queue/add`, `/api/queue/{index}`, `/api/queue/shuffle`
-**Settings:** `/api/settings/volume`
-**Status:** `/api/status`, `/api/status/queue`
-**Cache:** `/api/cache/` (list), `/api/cache/{filename}` (delete)
-**Docs:** `/docs` (interactive API documentation)
+| Category | Endpoints |
+|----------|-----------|
+| **Playback** | `POST /api/playback/{play,pause,resume,skip,stop}` |
+| **Queue** | `POST /api/queue/add`, `DELETE /api/queue/{index}`, `POST /api/queue/shuffle`, `DELETE /api/queue` |
+| **Settings** | `GET/PUT /api/settings/volume`, `GET/PUT /api/settings/loop` |
+| **Status** | `GET /api/status`, `GET /api/status/player`, `GET /api/status/queue` |
+| **Cache** | `GET /api/cache/`, `DELETE /api/cache/{filename}` |
+| **Docs** | `GET /docs` (interactive Swagger documentation) |
 
 ### Configuration
+
 Add to `config/options.ini`:
 ```ini
 [WebAPI]
 Enabled = yes
 Host = 0.0.0.0
 Port = 8000
-APIKey = your-secret-key
+APIKey = your-secret-key  ; Leave empty for no authentication
 ```
+
+**Options:**
+- `Enabled` - Enable/disable the web API and interface
+- `Host` - IP address to bind to (`0.0.0.0` for all interfaces)
+- `Port` - Port number (default: 8000)
+- `APIKey` - Optional API key for authentication (leave empty to disable auth)
 
 ### Running as a System Service
 
