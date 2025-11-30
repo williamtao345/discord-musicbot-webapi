@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 
 const props = defineProps({
   value: {
@@ -14,24 +14,60 @@ const props = defineProps({
 
 const emit = defineEmits(['change', 'update:value'])
 const trackRef = ref(null)
+const isDragging = ref(false)
+const dragValue = ref(0)
 
-const handleClick = (e) => {
-  if (props.disabled) return
+// Display value: show drag preview while dragging, otherwise show prop value
+const displayValue = computed(() => isDragging.value ? dragValue.value : props.value)
+
+const getPercentFromEvent = (e) => {
+  if (!trackRef.value) return 0
   const rect = trackRef.value.getBoundingClientRect()
-  const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100))
-  emit('change', percent)
-  emit('update:value', percent)
+  return Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100))
 }
+
+const handleMouseDown = (e) => {
+  if (props.disabled) return
+  e.preventDefault()
+  isDragging.value = true
+  dragValue.value = getPercentFromEvent(e)
+
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+}
+
+const handleMouseMove = (e) => {
+  if (!isDragging.value) return
+  dragValue.value = getPercentFromEvent(e)
+}
+
+const handleMouseUp = (e) => {
+  if (!isDragging.value) return
+  const finalValue = getPercentFromEvent(e)
+  isDragging.value = false
+
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+
+  emit('change', finalValue)
+  emit('update:value', finalValue)
+}
+
+// Cleanup listeners on unmount
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
+})
 </script>
 
 <template>
   <div
     class="slider-track"
     ref="trackRef"
-    @click="handleClick"
-    :class="{ disabled }"
+    @mousedown="handleMouseDown"
+    :class="{ disabled, dragging: isDragging }"
   >
-    <div class="slider-fill" :style="{ width: value + '%' }">
+    <div class="slider-fill" :style="{ width: displayValue + '%' }">
       <div class="slider-handle"></div>
     </div>
   </div>
@@ -47,11 +83,13 @@ const handleClick = (e) => {
   position: relative;
 }
 
-.slider-track:hover .slider-fill {
+.slider-track:hover .slider-fill,
+.slider-track.dragging .slider-fill {
   background: var(--blurple);
 }
 
-.slider-track:hover .slider-handle {
+.slider-track:hover .slider-handle,
+.slider-track.dragging .slider-handle {
   opacity: 1;
 }
 
@@ -61,6 +99,10 @@ const handleClick = (e) => {
   border-radius: 2px;
   position: relative;
   transition: background 0.2s ease;
+}
+
+.slider-track.dragging .slider-fill {
+  transition: none;
 }
 
 .slider-handle {

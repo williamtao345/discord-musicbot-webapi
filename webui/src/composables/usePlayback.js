@@ -88,6 +88,18 @@ export function usePlayback() {
     }
   }
 
+  async function seek(position) {
+    isActionPending.value = true
+    try {
+      await playbackApi.seek(position)
+      await fetchStatus()
+    } catch (err) {
+      console.error('Seek failed:', err)
+    } finally {
+      isActionPending.value = false
+    }
+  }
+
   return {
     isActionPending,
     togglePlay,
@@ -96,6 +108,7 @@ export function usePlayback() {
     skip,
     stop,
     setVolume,
-    setLoop
+    setLoop,
+    seek
   }
 }

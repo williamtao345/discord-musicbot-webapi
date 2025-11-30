@@ -71,6 +71,12 @@ class LoopRequest(BaseModel):
     guild_id: Optional[int] = None
 
 
+class SeekRequest(BaseModel):
+    """Request to seek to a position in the current song"""
+    position: float = Field(..., ge=0.0, description="Position in seconds to seek to")
+    guild_id: Optional[int] = None
+
+
 class GuildRequest(BaseModel):
     """Request with guild ID"""
     guild_id: Optional[int] = None

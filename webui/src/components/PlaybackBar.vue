@@ -7,7 +7,7 @@ import { usePlayback } from '../composables/usePlayback'
 import { useQueue } from '../composables/useQueue'
 
 const { currentTrack, isPlaying, volume, progress, loopQueue } = usePlayerStore()
-const { togglePlay, skip, setVolume, setLoop, isActionPending } = usePlayback()
+const { togglePlay, skip, setVolume, setLoop, seek, isActionPending } = usePlayback()
 const { shuffleQueue } = useQueue()
 
 // Format time from seconds to mm:ss
@@ -28,6 +28,12 @@ const volumePercent = computed(() => Math.round((volume.value || 0.5) * 100))
 
 const handleVolumeChange = (percent) => {
   setVolume(percent / 100)
+}
+
+const handleProgressChange = (percent) => {
+  if (!currentTrack.value?.duration) return
+  const position = (percent / 100) * currentTrack.value.duration
+  seek(position)
 }
 
 const handleToggleLoop = () => {
@@ -84,7 +90,7 @@ const handleToggleLoop = () => {
       </div>
       <div class="np-progress">
         <span class="np-time">{{ currentTime }}</span>
-        <SliderTrack :value="progressPercent" />
+        <SliderTrack :value="progressPercent" @change="handleProgressChange" />
         <span class="np-time">{{ duration }}</span>
       </div>
     </div>

@@ -171,6 +171,53 @@ class MusicPlayer(EventEmitter, Serializable):
         """
         self.emit("error", player=self, entry=entry, ex=error)
 
+    def seek(self, position: float) -> bool:
+        """
+        Seek to a specific position in the current song.
+
+        This works by:
+        1. Setting the start_time on the current entry
+        2. Re-adding the entry to the front of the queue
+        3. Killing current playback (which triggers playing the next entry)
+
+        :param: position:  Time in seconds to seek to.
+        :returns:  True if seek was successful, False otherwise.
+        """
+        log.noise(  # type: ignore[attr-defined]
+            "MusicPlayer.seek(%s) is called:  %s", position, repr(self)
+        )
+
+        entry = self._current_entry
+        if entry is None:
+            log.warning("Cannot seek: no current entry")
+            return False
+
+        # Only URLPlaylistEntry and LocalFilePlaylistEntry support seeking
+        if not isinstance(entry, (URLPlaylistEntry, LocalFilePlaylistEntry)):
+            log.warning("Cannot seek: entry type %s does not support seeking", type(entry))
+            return False
+
+        # Validate position
+        if position < 0:
+            position = 0
+
+        if entry.duration and position > entry.duration:
+            log.warning("Seek position %s exceeds duration %s", position, entry.duration)
+            return False
+
+        # Set the new start time
+        entry.set_start_time(position)
+
+        # Re-add to front of queue
+        self.playlist.entries.appendleft(entry)
+
+        # Kill current playback - this will trigger _playback_finished
+        # which will then play the next entry (our re-added entry)
+        self._current_entry = None  # Prevent repeat/loop logic from duplicating
+        self._kill_current_player()
+
+        return True
+
     def skip(self) -> None:
         """Skip the current playing entry but just killing playback."""
         log.noise(  # type: ignore[attr-defined]

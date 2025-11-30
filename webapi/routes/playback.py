@@ -4,7 +4,7 @@ Playback control routes - Play, pause, skip, stop operations
 from fastapi import APIRouter, Depends, Body
 from typing import Optional
 
-from ..schemas import SuccessResponse, GuildRequest
+from ..schemas import SuccessResponse, GuildRequest, SeekRequest
 from ..auth import verify_api_key
 from ..dependencies import get_player
 
@@ -87,3 +87,20 @@ async def stop(request: GuildRequest = Body(default=GuildRequest())):
         return SuccessResponse(message="Playback stopped")
     except Exception as e:
         return SuccessResponse(success=False, message=f"Failed to stop: {str(e)}")
+
+
+@router.post("/seek", response_model=SuccessResponse, dependencies=[Depends(verify_api_key)])
+async def seek(request: SeekRequest):
+    """
+    Seek to a specific position in the current song
+    """
+    player = get_player(request.guild_id)
+
+    try:
+        success = player.seek(request.position)
+        if success:
+            return SuccessResponse(message=f"Seeked to {request.position:.1f} seconds")
+        else:
+            return SuccessResponse(success=False, message="Cannot seek: no song playing or unsupported entry type")
+    except Exception as e:
+        return SuccessResponse(success=False, message=f"Failed to seek: {str(e)}")

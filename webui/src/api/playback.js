@@ -5,5 +5,6 @@ export const playbackApi = {
   pause: () => client.post('/playback/pause'),
   resume: () => client.post('/playback/resume'),
   skip: () => client.post('/playback/skip'),
-  stop: () => client.post('/playback/stop')
+  stop: () => client.post('/playback/stop'),
+  seek: (position) => client.post('/playback/seek', { position })
 }
