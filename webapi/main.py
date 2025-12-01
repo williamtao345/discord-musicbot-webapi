@@ -9,7 +9,7 @@ from typing import Optional
 import logging
 import os
 
-from .routes import status, playback, queue, settings, cache
+from .routes import status, playback, queue, settings, cache, playlists
 from . import dependencies, auth
 
 log = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ app.include_router(playback.router)
 app.include_router(queue.router)
 app.include_router(settings.router)
 app.include_router(cache.router)
+app.include_router(playlists.router)
 
 @app.get("/health")
 async def health():

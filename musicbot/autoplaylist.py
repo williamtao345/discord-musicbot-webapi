@@ -199,6 +199,158 @@ class AutoPlaylist(StrUserList):
             except (OSError, PermissionError, FileNotFoundError):
                 log.exception("Failed to save playlist file:  %s", self._file)
 
+    async def save(self) -> None:
+        """
+        Write current in-memory data to file (URLs only, one per line).
+        This overwrites the file completely without preserving comments.
+        """
+        async with self._file_lock:
+            try:
+                content = "\n".join(self.data)
+                if content and not content.endswith("\n"):
+                    content += "\n"
+                self._file.write_text(content, encoding="utf8")
+                log.info("Saved playlist file: %s", self._file.name)
+            except (OSError, PermissionError, FileNotFoundError):
+                log.exception("Failed to save playlist file: %s", self._file)
+                raise
+
+    async def insert_track(self, index: int, url: str) -> None:
+        """
+        Insert a track at a specific index.
+
+        :param index: Position to insert at (0-based)
+        :param url: URL or search query to insert
+        :raises IndexError: If index is out of bounds
+        """
+        async with self._update_lock:
+            if index < 0 or index > len(self.data):
+                raise IndexError(
+                    f"Index {index} out of bounds for playlist of length {len(self.data)}"
+                )
+            self.data.insert(index, url)
+            log.info(
+                "Inserted track at index %d in playlist %s: %s",
+                index,
+                self._file.name,
+                url,
+            )
+        await self.save()
+
+    async def remove_at_index(self, index: int) -> str:
+        """
+        Remove a track by its index.
+
+        :param index: Index of track to remove (0-based)
+        :returns: The removed URL
+        :raises IndexError: If index is out of bounds
+        """
+        async with self._update_lock:
+            if index < 0 or index >= len(self.data):
+                raise IndexError(
+                    f"Index {index} out of bounds for playlist of length {len(self.data)}"
+                )
+            removed = self.data.pop(index)
+            log.info(
+                "Removed track at index %d from playlist %s: %s",
+                index,
+                self._file.name,
+                removed,
+            )
+        await self.save()
+        return removed
+
+    async def move_track(self, from_index: int, to_index: int) -> None:
+        """
+        Move a track from one position to another.
+
+        :param from_index: Current index of the track
+        :param to_index: Target index for the track
+        :raises IndexError: If either index is out of bounds
+        """
+        async with self._update_lock:
+            if from_index < 0 or from_index >= len(self.data):
+                raise IndexError(
+                    f"from_index {from_index} out of bounds for playlist of length {len(self.data)}"
+                )
+            if to_index < 0 or to_index >= len(self.data):
+                raise IndexError(
+                    f"to_index {to_index} out of bounds for playlist of length {len(self.data)}"
+                )
+            track = self.data.pop(from_index)
+            self.data.insert(to_index, track)
+            log.info(
+                "Moved track from index %d to %d in playlist %s",
+                from_index,
+                to_index,
+                self._file.name,
+            )
+        await self.save()
+
+    async def reorder(self, new_order: List[int]) -> None:
+        """
+        Reorder all tracks based on a list of indices.
+
+        :param new_order: List of indices representing the new order
+        :raises ValueError: If new_order doesn't match playlist length or contains invalid indices
+        """
+        async with self._update_lock:
+            if len(new_order) != len(self.data):
+                raise ValueError(
+                    f"new_order length ({len(new_order)}) must match playlist length ({len(self.data)})"
+                )
+            if set(new_order) != set(range(len(self.data))):
+                raise ValueError(
+                    "new_order must contain each index exactly once"
+                )
+            self.data = [self.data[i] for i in new_order]
+            log.info("Reordered playlist %s", self._file.name)
+        await self.save()
+
+    async def replace_track(self, index: int, new_url: str) -> str:
+        """
+        Replace a track at a specific index with a new URL.
+
+        :param index: Index of track to replace
+        :param new_url: New URL to put at that index
+        :returns: The old URL that was replaced
+        :raises IndexError: If index is out of bounds
+        """
+        async with self._update_lock:
+            if index < 0 or index >= len(self.data):
+                raise IndexError(
+                    f"Index {index} out of bounds for playlist of length {len(self.data)}"
+                )
+            old_url = self.data[index]
+            self.data[index] = new_url
+            log.info(
+                "Replaced track at index %d in playlist %s: %s -> %s",
+                index,
+                self._file.name,
+                old_url,
+                new_url,
+            )
+        await self.save()
+        return old_url
+
+    def delete_file(self) -> bool:
+        """
+        Delete the playlist file from disk.
+
+        :returns: True if file was deleted, False if it didn't exist
+        """
+        try:
+            if self._file.is_file():
+                self._file.unlink()
+                self.data = []
+                self._is_loaded = False
+                log.info("Deleted playlist file: %s", self._file.name)
+                return True
+            return False
+        except (OSError, PermissionError):
+            log.exception("Failed to delete playlist file: %s", self._file)
+            raise
+
 
 class AutoPlaylistManager:
     """Manager class that facilitates multiple playlists."""
@@ -347,3 +499,110 @@ class AutoPlaylistManager:
         """Check for the existence of the given playlist file."""
         # using pathlib .name prevents directory traversal attack.
         return self._apl_dir.joinpath(pathlib.Path(filename).name).is_file()
+
+    def create_playlist(self, name: str) -> AutoPlaylist:
+        """
+        Create a new empty playlist file.
+
+        :param name: Name for the playlist (without .txt extension)
+        :returns: The created AutoPlaylist instance
+        :raises ValueError: If playlist already exists or name is invalid
+        """
+        # Sanitize name - remove path components and extension
+        safe_name = pathlib.Path(name).stem
+        if not safe_name:
+            raise ValueError("Playlist name cannot be empty")
+
+        # Check for invalid characters
+        invalid_chars = '<>:"/\\|?*'
+        if any(c in safe_name for c in invalid_chars):
+            raise ValueError(f"Playlist name contains invalid characters: {invalid_chars}")
+
+        filename = f"{safe_name}.txt"
+        pl_file = self._apl_dir.joinpath(filename)
+
+        if pl_file.is_file():
+            raise ValueError(f"Playlist '{safe_name}' already exists")
+
+        # Create the file
+        pl_file.touch(exist_ok=False)
+        log.info("Created new playlist: %s", filename)
+
+        # Create and register the AutoPlaylist instance
+        playlist = AutoPlaylist(pl_file, self._bot)
+        playlist._is_loaded = True  # Mark as loaded since it's empty
+        self._playlists[safe_name] = playlist
+
+        return playlist
+
+    def delete_playlist(self, name: str) -> bool:
+        """
+        Delete a playlist file and remove it from the manager.
+
+        :param name: Name of the playlist to delete
+        :returns: True if deleted successfully
+        :raises ValueError: If playlist doesn't exist
+        """
+        safe_name = pathlib.Path(name).stem
+        pl_file = self._apl_dir.joinpath(f"{safe_name}.txt")
+
+        if not pl_file.is_file():
+            raise ValueError(f"Playlist '{safe_name}' does not exist")
+
+        # Get the playlist instance if it exists
+        if safe_name in self._playlists:
+            playlist = self._playlists[safe_name]
+            playlist.delete_file()
+            del self._playlists[safe_name]
+        else:
+            # File exists but not in our registry - just delete it
+            pl_file.unlink()
+
+        log.info("Deleted playlist: %s", safe_name)
+        return True
+
+    def rename_playlist(self, old_name: str, new_name: str) -> AutoPlaylist:
+        """
+        Rename a playlist file.
+
+        :param old_name: Current name of the playlist
+        :param new_name: New name for the playlist
+        :returns: The renamed AutoPlaylist instance
+        :raises ValueError: If old playlist doesn't exist or new name is invalid/taken
+        """
+        old_safe = pathlib.Path(old_name).stem
+        new_safe = pathlib.Path(new_name).stem
+
+        if not new_safe:
+            raise ValueError("New playlist name cannot be empty")
+
+        # Check for invalid characters
+        invalid_chars = '<>:"/\\|?*'
+        if any(c in new_safe for c in invalid_chars):
+            raise ValueError(f"Playlist name contains invalid characters: {invalid_chars}")
+
+        old_file = self._apl_dir.joinpath(f"{old_safe}.txt")
+        new_file = self._apl_dir.joinpath(f"{new_safe}.txt")
+
+        if not old_file.is_file():
+            raise ValueError(f"Playlist '{old_safe}' does not exist")
+
+        if new_file.is_file():
+            raise ValueError(f"Playlist '{new_safe}' already exists")
+
+        # Rename the file
+        old_file.rename(new_file)
+        log.info("Renamed playlist: %s -> %s", old_safe, new_safe)
+
+        # Update registry
+        if old_safe in self._playlists:
+            playlist = self._playlists.pop(old_safe)
+            playlist._file = new_file
+            playlist._removed_file = new_file.with_name(f"{new_safe}.removed.log")
+            self._playlists[new_safe] = playlist
+        else:
+            # Create new instance for renamed file
+            playlist = AutoPlaylist(new_file, self._bot)
+            self._playlists[new_safe] = playlist
+
+        return playlist

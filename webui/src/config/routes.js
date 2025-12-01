@@ -1,9 +1,10 @@
-import { Music, Search, HardDrive, Settings } from 'lucide-vue-next'
+import { Music, Search, HardDrive, ListMusic, Settings } from 'lucide-vue-next'
 
 export const routes = [
   { path: '/', label: 'Now Playing', icon: Music },
   { path: '/search', label: 'Search', icon: Search },
   { path: '/cache', label: 'Cached Songs', icon: HardDrive },
+  { path: '/playlists', label: 'Playlists', icon: ListMusic },
   { path: '/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -13,8 +14,9 @@ export const navItems = [
   { divider: true },
   routes[1],
   routes[2],
-  { divider: true },
   routes[3],
+  { divider: true },
+  routes[4],
 ]
 
 // For simple path-to-label lookup (MainHeader)
